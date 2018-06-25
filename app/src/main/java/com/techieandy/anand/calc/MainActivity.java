@@ -1,6 +1,7 @@
 package com.techieandy.anand.calc;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -136,9 +137,20 @@ public class MainActivity extends AppCompatActivity{
                     result.setText(res.toString());
 
                 } catch (SyntaxException e) {
-                    String err = e.toString();
-                    input.setText(err);
 
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Error");
+                    builder.setMessage("Invalid Input");
+                    builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            in = "0";
+                            input.setText(in);
+                            result.setText(in);
+                        }
+                    });
+                    builder.show();
                 }
 
 
