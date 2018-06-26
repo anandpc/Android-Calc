@@ -129,11 +129,16 @@ public class MainActivity extends AppCompatActivity{
         btn_eq.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Covert x to * for Multiplication to occur.
+
+                in = in.replace("x", "*");
+
                 // Calc Logic Here
                 Symbols symbols = new Symbols();
 
                 try {
                     Double res = symbols.eval(in);
+
                     result.setText(res.toString());
 
                 } catch (SyntaxException e) {
@@ -166,6 +171,8 @@ public class MainActivity extends AppCompatActivity{
     }
 
     public void clear(View view) {
+        result.setText("");
+        in = in.replace("*", "x");
         if(in.length()>0){
             in = in.substring(0, in.length() - 1);
         }
@@ -179,7 +186,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
     public void mul(View view) {
-        in = in + "*";
+        in = in + "x";
         input.setText(in);
     }
 
