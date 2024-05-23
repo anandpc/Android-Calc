@@ -1,0 +1,84 @@
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import com.google.accompanist.pager.*
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
+
+@Composable
+fun TopAppBarWithPager() {
+    val tabTitles = listOf("Sticky", "Home", "Profile", "Settings", "About", "Contact")
+    val pagerState = rememberPagerState(initialPage = 0)
+    val coroutineScope = rememberCoroutineScope()
+
+    Column {
+        TopAppBar(
+            backgroundColor = Color.White,
+            contentColor = Color.Blue
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                // First Tab - Sticky
+                Tab(
+                    selected = pagerState.currentPage == 0,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(0)
+                        }
+                    },
+                    modifier = Modifier.width(100.dp) // Adjust the width as needed
+                ) {
+                    Text("Sticky")
+                }
+
+                // Remaining Tabs - Scrollable
+                ScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage - 1,
+                    edgePadding = 0.dp, // Remove padding to align with the sticky tab
+                    indicator = { tabPositions ->
+                        if (pagerState.currentPage > 0) {
+                            TabRowDefaults.Indicator(
+                                Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage - 1])
+                            )
+                        }
+                    },
+                    backgroundColor = Color.White,
+                    contentColor = Color.Blue
+                ) {
+                    tabTitles.drop(1).forEachIndexed { index, title ->
+                        Tab(
+                            selected = pagerState.currentPage == index + 1,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index + 1)
+                                }
+                            },
+                            text = {
+                                Text(text = title)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        HorizontalPager(
+            count = tabTitles.size,
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    text = "Page: ${tabTitles[page]}",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
+    }
+}
