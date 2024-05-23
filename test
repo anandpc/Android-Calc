@@ -1,84 +1,106 @@
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import com.google.accompanist.pager.*
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MyApp()
+        }
+    }
+}
 
 @Composable
-fun TopAppBarWithPager() {
-    val tabTitles = listOf("Sticky", "Home", "Profile", "Settings", "About", "Contact")
-    val pagerState = rememberPagerState(initialPage = 0)
-    val coroutineScope = rememberCoroutineScope()
+fun MyApp() {
+    val tabTitles = listOf("Tab 1", "Tab 2", "Tab 3")
+    var selectedTabIndex by remember { mutableStateOf(0) }
 
-    Column {
-        TopAppBar(
-            backgroundColor = Color.White,
-            contentColor = Color.Blue
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                // First Tab - Sticky
-                Tab(
-                    selected = pagerState.currentPage == 0,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(0)
-                        }
-                    },
-                    modifier = Modifier.width(100.dp) // Adjust the width as needed
-                ) {
-                    Text("Sticky")
-                }
-
-                // Remaining Tabs - Scrollable
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("TabRow Example") })
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                // Fixed Tab with Indicator
+                CustomTab(
+                    selected = selectedTabIndex == 0,
+                    onClick = { selectedTabIndex = 0 },
+                    text = { Text("Fixed Tab") },
+                    indicatorColor = if (selectedTabIndex == 0) Color.Blue else Color.Transparent
+                )
+                // Scrollable Tabs with Indicators
                 ScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage - 1,
-                    edgePadding = 0.dp, // Remove padding to align with the sticky tab
+                    selectedTabIndex = if (selectedTabIndex > 0) selectedTabIndex - 1 else 0,
+                    modifier = Modifier.weight(1f),
                     indicator = { tabPositions ->
-                        if (pagerState.currentPage > 0) {
-                            TabRowDefaults.Indicator(
-                                Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage - 1])
-                            )
-                        }
-                    },
-                    backgroundColor = Color.White,
-                    contentColor = Color.Blue
+                        TabRowDefaults.Indicator(
+                            Modifier.tabIndicatorOffset(tabPositions[if (selectedTabIndex > 0) selectedTabIndex - 1 else 0]),
+                            color = Color.Blue
+                        )
+                    }
                 ) {
-                    tabTitles.drop(1).forEachIndexed { index, title ->
+                    tabTitles.forEachIndexed { index, title ->
                         Tab(
-                            selected = pagerState.currentPage == index + 1,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index + 1)
-                                }
-                            },
-                            text = {
-                                Text(text = title)
-                            }
+                            selected = selectedTabIndex == index + 1,
+                            onClick = { selectedTabIndex = index + 1 },
+                            text = { Text(title) }
                         )
                     }
                 }
             }
-        }
-
-        HorizontalPager(
-            count = tabTitles.size,
-            state = pagerState,
-            modifier = Modifier.weight(1f)
-        ) { page ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "Page: ${tabTitles[page]}",
-                    modifier = Modifier.align(Alignment.Center)
-                )
+            Spacer(modifier = Modifier.height(16.dp))
+            when (selectedTabIndex) {
+                0 -> TabContent("Content for Fixed Tab")
+                1 -> TabContent("Content for Tab 1")
+                2 -> TabContent("Content for Tab 2")
+                3 -> TabContent("Content for Tab 3")
             }
         }
     }
+}
+
+@Composable
+fun CustomTab(
+    selected: Boolean,
+    onClick: () -> Unit,
+    text: @Composable () -> Unit,
+    indicatorColor: Color
+) {
+    Column(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+    ) {
+        text()
+        Spacer(modifier = Modifier.height(4.dp))
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .height(2.dp)
+                    .fillMaxWidth()
+                    .background(indicatorColor)
+            )
+        }
+    }
+}
+
+@Composable
+fun TabContent(content: String) {
+    BasicText(text = content, modifier = Modifier.fillMaxSize())
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    MyApp()
 }
