@@ -1,0 +1,102 @@
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.accompanist.pager.*
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun CenteredScrollableRowWithPager() {
+    val pagerState = rememberPagerState()
+    val rowScrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val items = List(10) { "Item $it" } // Sample items
+
+    var containerWidth by remember { mutableStateOf(0) }
+    val itemWidths = remember { mutableStateListOf<Int>() }
+
+    Column {
+        // Scrollable row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .horizontalScroll(rowScrollState)
+                .onGloballyPositioned { coordinates ->
+                    containerWidth = coordinates.size.width
+                },
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items.forEachIndexed { index, item ->
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primary)
+                        .padding(16.dp)
+                        .onGloballyPositioned { coordinates ->
+                            if (itemWidths.size == index) {
+                                itemWidths.add(coordinates.size.width)
+                            }
+                        }
+                ) {
+                    Text(
+                        text = item,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Horizontal pager
+        HorizontalPager(
+            state = pagerState,
+            count = items.size,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+        ) { page ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.secondary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = items[page], fontSize = 32.sp, color = MaterialTheme.colorScheme.onSecondary)
+            }
+        }
+    }
+
+    // Synchronize row scroll position with pager state
+    LaunchedEffect(pagerState.currentPage, containerWidth, itemWidths.size) {
+        if (containerWidth > 0 && itemWidths.size == items.size) {
+            coroutineScope.launch {
+                val targetOffset = calculateOffset(pagerState.currentPage, itemWidths, containerWidth)
+                rowScrollState.animateScrollBy(targetOffset - rowScrollState.value)
+            }
+        }
+    }
+}
+
+fun calculateOffset(currentPage: Int, itemWidths: List<Int>, containerWidth: Int): Float {
+    val cumulativeWidth = itemWidths.take(currentPage).sum()
+    val itemWidth = itemWidths[currentPage]
+    return cumulativeWidth + itemWidth / 2f - containerWidth / 2f
+}
+
+@Composable
+fun MyApp() {
+    MaterialTheme {
+        CenteredScrollableRowWithPager()
+    }
+}
